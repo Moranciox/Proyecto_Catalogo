@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env.*
+.env
+
+# VSCode
+.vscode/settings.json
+
+# Android / Gradle
+**/.gradle/
+**/build/
+**/.idea/
+**/*.iml
+**/local.properties
+**/.kotlin/
+
+# Gradle
+.gradle/
+build/
+
+# Local configuration
+local.properties
+
+# IntelliJ / Android Studio
+.idea/
+*.iml
+
+# Logs
+*.log
+
+# Mac/Windows noise
+.DS_Store
+Thumbs.db
+
+# Kotlin/Java
+out/
