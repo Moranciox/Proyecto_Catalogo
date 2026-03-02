@@ -60,7 +60,18 @@ fun ProductListScreen(onOpenDetail: (Product) -> Unit) {
         error = null
         runCatching {
             // Pedimos también inactivos para poder filtrar en UI.
-            repo.fetchProducts(q = null, includeInactive = true, limit = 200, offset = 0)
+            // IMPORTANTE: ya no limitamos a 200. Traemos en páginas para no reventar memoria/red.
+            val pageSize = 500
+            var offset = 0
+            val all = mutableListOf<Product>()
+            while (true) {
+                val chunk = repo.fetchProducts(q = null, includeInactive = true, limit = pageSize, offset = offset)
+                if (chunk.isEmpty()) break
+                all.addAll(chunk)
+                if (chunk.size < pageSize) break
+                offset += pageSize
+            }
+            all
         }
             .onSuccess { products = it }
             .onFailure { error = it.message ?: "Error desconocido" }

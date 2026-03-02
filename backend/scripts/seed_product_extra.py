@@ -37,9 +37,11 @@ def main():
         with ext.cursor() as cur:
             cur.execute(open("scripts/01_ext_schema.sql", "r", encoding="utf-8").read())
 
-    with conn_integra() as inte:
-        with inte.cursor() as cur:
-            cur.execute("SELECT DISTINCT p.cod_producto FROM comun.producto p JOIN ventas.detalle_lp_vendedor d ON d.cod_producto = p.cod_producto WHERE p.activo = true AND d.p_base > 0;")
+    # Sembramos SOLO los productos "reales" ya filtrados en el cache.
+    # (Primero ejecuta scripts/build_catalog_cache.py)
+    with conn_ext() as ext:
+        with ext.cursor() as cur:
+            cur.execute("SELECT cod_producto FROM catalog.product_catalog_cache ORDER BY cod_producto;")
             cods = [int(r["cod_producto"]) for r in cur.fetchall()]
 
     inserted = 0
@@ -53,7 +55,7 @@ def main():
                 inserted += 1
         ext.commit()
 
-    print(f"OK: {inserted} filas aseguradas en catalog.product_extra")
+    print(f"OK: {inserted} filas aseguradas en catalog.product_extra (desde cache)")
 
 if __name__ == "__main__":
     main()

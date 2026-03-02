@@ -13,7 +13,8 @@ interface CatalogApi {
          * La app puede decidir si los muestra o no.
          */
         @Query("include_inactive") includeInactive: Boolean = false,
-        @Query("limit") limit: Int = 200,
+        // Si limit es null, el backend devuelve todo. Recomendado usar paginado.
+        @Query("limit") limit: Int? = null,
         @Query("offset") offset: Int = 0
     ): List<Product>
 }

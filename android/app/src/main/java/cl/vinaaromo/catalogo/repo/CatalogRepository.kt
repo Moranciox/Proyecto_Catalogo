@@ -7,7 +7,7 @@ class CatalogRepository {
     suspend fun fetchProducts(
         q: String? = null,
         includeInactive: Boolean = true,
-        limit: Int = 200,
+        limit: Int? = null,
         offset: Int = 0
     ): List<Product> {
         return ApiClient.api.getProducts(

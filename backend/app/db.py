@@ -244,20 +244,42 @@ def upsert_product_extra(cod_producto: int, data: dict):
             return cur.fetchone()
 
 
-def fetch_products_from_cache(limit: int = 200, offset: int = 0, q: str | None = None):
-    where = ""
-    params = {"limit": limit, "offset": offset}
+def fetch_products_from_cache(
+    limit: int | None = None,
+    offset: int = 0,
+    q: str | None = None,
+    min_price: float | None = None,
+):
+    # Salvavidas: aunque el cache ya viene filtrado por script,
+    # aplicamos reglas mínimas acá para evitar que se cuele basura.
+    where_parts = [
+        "desc_producto IS NOT NULL",
+        "btrim(desc_producto) <> ''",
+        "char_length(btrim(desc_producto)) >= 3",
+        "precio_neto IS NOT NULL",
+        "precio_neto >= %(min_price)s",
+    ]
+    eff_min_price = float(settings.CATALOG_MIN_PRICE) if min_price is None else float(min_price)
+    params = {"offset": offset, "min_price": eff_min_price}
 
     if q and q.strip():
-        where = "WHERE desc_producto ILIKE %(q)s"
+        where_parts.append("desc_producto ILIKE %(q)s")
         params["q"] = f"%{q.strip()}%"
+
+    where = "WHERE " + " AND ".join(where_parts)
+
+    limit_clause = ""
+    if limit is not None:
+        limit_clause = "LIMIT %(limit)s"
+        params["limit"] = limit
 
     sql = f"""
     SELECT cod_producto, desc_producto, precio_neto, lp_usada
     FROM catalog.product_catalog_cache
     {where}
     ORDER BY desc_producto
-    LIMIT %(limit)s OFFSET %(offset)s;
+    {limit_clause}
+    OFFSET %(offset)s;
     """
 
     with _connect_ext() as conn:

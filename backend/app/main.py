@@ -44,10 +44,17 @@ async def health(deep: bool = Query(False)):
 async def products(
     q: str | None = Query(None),
     include_inactive: bool = Query(False, description="Si true, incluye productos desactivados (EXT)."),
-    limit: int = Query(200, ge=1, le=2000),
-    offset: int = Query(0, ge=0),
+    featured_only: bool = Query(False, description="Si true, devuelve solo productos destacados (EXT)."),
+    lp: int | None = Query(None, description="Opcional. Compatibilidad: el cache ahora se construye con TODAS las LP; este parámetro no filtra."),
+    min_price: float | None = Query(None, ge=0, description="Opcional. Umbral anti-basura; si no viene se usa CATALOG_MIN_PRICE."),
+    limit: int | None = Query(None, ge=1, le=20000, description="Si no se indica, devuelve todo."),
+    offset: int = Query(0, ge=0)
 ):
-    rows = await anyio.to_thread.run_sync(fetch_products_from_cache, limit, offset, q)
+    # lp no se usa directamente al leer el cache (lp_usada viene calculada por el builder).
+    # Se deja el parámetro para mantener compatibilidad y permitir futura migración.
+    _ = lp
+
+    rows = await anyio.to_thread.run_sync(fetch_products_from_cache, limit, offset, q, min_price)
 
     cods = [int(r["cod_producto"]) for r in rows]
     extras = await anyio.to_thread.run_sync(fetch_extras_for_products, cods)
@@ -59,6 +66,9 @@ async def products(
 
         is_active = bool(ex.get("is_active", True))
         if (not include_inactive) and (not is_active):
+            continue
+
+        if featured_only and (not bool(ex.get("is_featured", False))):
             continue
 
         out.append(
