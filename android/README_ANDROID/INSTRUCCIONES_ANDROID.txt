@@ -1,0 +1,18 @@
+Coloca estos archivos donde corresponda en tu proyecto:
+- data/dto/ProductsDto.kt
+- data/remote/CatalogApi.kt
+- data/CatalogRepository.kt
+- ui/catalog/CatalogViewModel.kt
+- ui/catalog/CatalogScreen.kt
+
+Reemplaza `YOUR_PACKAGE` por tu package real.
+
+Conecta tu ViewModel a la UI así:
+val state by vm.state.collectAsState()
+CatalogScreen(
+  state = state,
+  onQueryChange = vm::onQueryChange,
+  onToggleInactive = vm::setIncludeInactive,
+  onLoadMore = vm::loadMore,
+  onProductClick = { ... }
+)
